@@ -1,7 +1,11 @@
 
 import streamlit as st
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from fallback import get_fallback_response
+from fallback import objective_words, contains_objective_words
+from fallback import BAD_WORDS, contains_bad_words
 
+# prepare response using the fine-tuned model
 def result_maker(input_text):
     model = AutoModelForSeq2SeqLM.from_pretrained("./results")
     tokenizer = AutoTokenizer.from_pretrained("./results")
@@ -14,13 +18,10 @@ def result_maker(input_text):
     early_stopping=True  # To stop when the model reaches a natural end
     )
     return output[0]['generated_text']
-
-
+      
+# streamlit application
 st.title("How can i help you...")
 
-
-# if "openai_model" not in st.session_state:
-#   st.session_state["openai_model"] = "gpt-3.5-turbo"
 
 if "messages" not in st.session_state:
   st.session_state.messages = []
@@ -36,17 +37,15 @@ if prompt := st.chat_input("What is AI?"):
 
   with st.chat_message("assistant"):
     message_placeholder = st.empty()
-    full_response = result_maker(prompt)
 
-    # for response in openai.ChatCompletion.create(
-    #   model=st.session_state["openai_model"],
-    #   messages=[
-    #     {"role": m["role"], "content": m["content"]}
-    #     for m in st.session_state.messages
-    #   ],
-    #   stream=True,
-    # ):
-    #   full_response += response.choices[0].delta.get("content", "")
-    #   message_placeholder.markdown(full_response + "▌")
+    # Check if the user's prompt contains objective words
+    if contains_objective_words(prompt, objective_words):
+      full_response = get_fallback_response(prompt)
+    else:
+      full_response = result_maker(prompt)
+    # check if original modal response has bad/offensive words, then get response from fallback mechanism
+      if contains_bad_words(full_response, BAD_WORDS):
+        full_response = get_fallback_response(prompt)
+
     message_placeholder.markdown(full_response)
   st.session_state.messages.append({"role": "assistant", "content": full_response})

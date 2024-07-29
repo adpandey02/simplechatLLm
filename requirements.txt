@@ -3,5 +3,7 @@ Tokenizers
 torch
 tensorflow
 sentencepiece
+google-generativeai
+python-dotenv
 protobuf
 streamlit
