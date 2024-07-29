@@ -1,0 +1,7 @@
+Transformers
+Tokenizers
+torch
+tensorflow
+sentencepiece
+protobuf
+streamlit
